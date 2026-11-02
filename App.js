@@ -64,7 +64,7 @@ export default function App() {
         data={tasks}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
-          <Text style={styles.empty}>No data</Text>
+          <Text style={styles.empty}>Ei tehtäviä vielä</Text>
         }
         ItemSeparatorComponent={() => (
           <View style={styles.separator} />
