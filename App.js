@@ -78,7 +78,6 @@ export default function App() {
                   item.completed && styles.completedTask,
                 ]}
               >
-                {item.completed ? ' V ' : ' O '}
                 {item.title}
               </Text>
             </Pressable>
