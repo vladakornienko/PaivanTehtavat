@@ -1,15 +1,65 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, Pressable, StyleSheet, } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Speech from 'expo-speech';
 
 export default function App() {
   const [task, setTask] = useState('');
   const [tasks, setTasks] = useState([]);
+  const [loadingFinished, setLoadingFinished] = useState(false);
 
-  const today = new Date().toLocaleDateString('fi-Fi', {
+  const [todayKey] = useState(() => new Date().toDateString());
+
+  const today = new Date().toLocaleDateString('fi-FI', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
+
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem('paivanTehtavat');
+
+        if (jsonValue !== null) {
+          const savedData = JSON.parse(jsonValue);
+
+          if (savedData.date === todayKey) {
+            setTasks(savedData.tasks);
+          } else {
+            setTasks([]);
+          }
+        }
+      } catch (e) {
+        console.log('Virhe tehtävien lataamisessa:', e);
+      } finally {
+        setLoadingFinished(true);
+      }
+    };
+
+    loadTasks();
+  }, [todayKey]);
+
+  useEffect(() => {
+    const saveTasks = async () => {
+      if (!loadingFinished) {
+        return;
+      }
+
+      try {
+        const jsonValue = JSON.stringify({
+          date: todayKey,
+          tasks: tasks,
+        });
+
+        await AsyncStorage.setItem('paivanTehtavat', jsonValue);
+      } catch (e) {
+        console.log('Virhe tehtävien tallentamisessa:', e);
+      }
+    };
+
+    saveTasks();
+  }, [tasks, loadingFinished, todayKey]);
 
   const addTask = () => {
     const newTask = task.trim();
@@ -41,6 +91,32 @@ export default function App() {
     setTasks(tasks.filter((item) => item.id !== id));
   };
 
+  const speakPendingTasks = () => {
+    const pendingTasks = tasks.filter((item) => !item.completed);
+
+    if (pendingTasks.length === 0) {
+      Speech.speak('Ei keskeneräisiä tehtäviä', {
+        language: 'fi-FI',
+      });
+      return;
+    }
+
+    const taskText = pendingTasks.map((item) => item.title).join('. ');
+
+    Speech.speak(taskText, {
+      language: 'fi-FI',
+    });
+
+  };
+
+  if (!loadingFinished) {
+    return (
+      <View style={styles.container}>
+        <Text>Ladataan tehtäviä...</Text>
+      </View>
+    );
+  }
+
 
   return (
     <View style={styles.container}>
@@ -56,6 +132,12 @@ export default function App() {
       />
 
       <Button title="Lisää tehtävä" onPress={addTask} />
+
+      <View style={styles.speechButton}>
+        <Button
+          title="Lue keskeneräiset tehtävät"
+          onPress={speakPendingTasks} />
+      </View>
 
       <Text style={styles.heading}>Tehtävälista</Text>
 
@@ -121,6 +203,11 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
   },
+
+  speechButton: {
+    marginTop: 12,
+  },
+
   heading: {
     fontSize: 20,
     fontWeight: 'bold',
