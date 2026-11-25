@@ -91,17 +91,17 @@ export default function App() {
     setTasks(tasks.filter((item) => item.id !== id));
   };
 
-  const speakPendingTasks = () => {
-    const pendingTasks = tasks.filter((item) => !item.completed);
+  const speakUnfinishedTasks = () => {
+    const unfinishedTasks = tasks.filter((item) => !item.completed);
 
-    if (pendingTasks.length === 0) {
+    if (unfinishedTasks.length === 0) {
       Speech.speak('Ei keskeneräisiä tehtäviä', {
         language: 'fi-FI',
       });
       return;
     }
 
-    const taskText = pendingTasks.map((item) => item.title).join('. ');
+    const taskText = unfinishedTasks.map((item) => item.title).join('. ');
 
     Speech.speak(taskText, {
       language: 'fi-FI',
@@ -136,7 +136,7 @@ export default function App() {
       <View style={styles.speechButton}>
         <Button
           title="Lue keskeneräiset tehtävät"
-          onPress={speakPendingTasks} />
+          onPress={speakUnfinishedTasks} />
       </View>
 
       <Text style={styles.heading}>Tehtävälista</Text>
@@ -180,7 +180,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#b8a2b5',
+    backgroundColor: '#eeee94',
     padding: 24,
     paddingTop: 100,
   },
